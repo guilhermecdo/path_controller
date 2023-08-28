@@ -3,15 +3,8 @@ import rospy
 from geometry_msgs.msg import *
 from sensor_msgs.msg import *
 from nav_msgs.msg import *
-import random
-import math
 from gazebo_msgs.msg import *
 import numpy as np
-import csv
-import rospkg
-import matplotlib.pyplot as plt
-from matplotlib import cm
-import time
 from environment import Env
 
 if __name__ == "__main__": 
@@ -20,19 +13,33 @@ if __name__ == "__main__":
     env = Env()
     state_scan = env.reset()
     action = np.zeros(2)
-
+    env.step([0,0])
     pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)    
     r = rospy.Rate(5) # 10hz
     velocity = Twist()
+    
+    env.creatPath()
+    print(env.path)
     while not rospy.is_shutdown():
-        # FACA SEU CODIGO AQUI
-        if (min(state_scan[:20]) > 0.25):
-            action[0] = .0
-            action[1] = 0.
-        else:
-            action[0] = 0.
-            action[1] = 0.0
-            
-        state_scan = env.step(action)
-                
+        '''
+        state_scan=env.step([0,0])
+        left=min(state_scan[60:120])
+        right=min(state_scan[240:300])
+        front=min([min(state_scan[0:60]),min(state_scan[300:])])
+        print('front,left,right')       
+        print(front,left,right)
+        
+        while True:
+            env.step([0,-0.3])
+            print(env.yaw)
+        '''
+        if env.goal_numbers>0:
+            if env.goThroughPath():
+                env.creatPath()
+            else:
+                env.obstacleAvoidance()
+                env.creatPath()
+        else: 
+            rospy.signal_shutdown()
+        
         r.sleep()
